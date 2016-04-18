@@ -42,7 +42,7 @@ def tiles_to_numeric_vector(tiles, max_len, tileset):
 
 
 # Hyperparameters
-n_trials = 1000
+n_trials = 2000
 max_len = 10
 
 
@@ -58,7 +58,10 @@ for i in xrange(n_trials):
 
     if winning_tile is not None:
         pond_ind = tiles_to_numeric_vector(pond, max_len, unique_tiles)
-        out_str = ','.join([str(winning_tile),
+        winning_tile_ind = tiles_to_numeric_vector(
+            winning_tile, 1, unique_tiles)
+
+        out_str = ','.join([str(winning_tile_ind[0]),
                            ','.join([str(x) for x in pond_ind])])
 
         f.write(out_str + '\n')
