@@ -62,8 +62,14 @@ for i in xrange(n_trials):
         winning_tile_ind = tiles_to_numeric_vector(
             winning_tile, 1, unique_tiles)
 
+        out_vec = [0] * 12
+        n = 1
+        for tile in [x for x in pond_ind if x != -1]:
+            out_vec[tile] = n
+            n += 1
+
         out_str = ','.join([str(winning_tile_ind[0]),
-                           ','.join([str(x) for x in pond_ind])])
+                            ','.join([str(x) for x in out_vec])])
 
         f.write(out_str + '\n')
 f.close()

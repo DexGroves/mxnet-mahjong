@@ -35,16 +35,16 @@ mx.set.seed(0)
 mx_model <- mx.mlp(train_x,
                    train_y,
                    num.round = 1000,
-                   hidden_node = c(13, 6),
+                   hidden_node = c(13),
                    activation = "relu",
                    out_activation = "softmax",
                    out_node = 12,
-                   array.batch.size = 60,
-                   learning.rate = 0.02,
+                   array.batch.size = 500,
+                   learning.rate = 0.1,
                    momentum = 0.1,
                    array.layout = "rowmajor",
-                   # initializer = mx.init.normal(1),
                    initializer=mx.init.uniform(0.1),
+                   # initializer = mx.init.normal(1),
                    eval.metric = mx.metric.accuracy)
 
 # Evaluate how bad it is ------------------------------------------------------
