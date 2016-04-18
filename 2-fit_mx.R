@@ -44,11 +44,11 @@ mx_model <- mx.mlp(train_x,
 
 
 prediction_layer <- predict(mx_model, test_x)
-prediction <- max.col(t(preds)) - 1
+prediction <- max.col(t(prediction_layer)) - 1
 table(prediction)
 
 prediction_layer_train <- predict(mx_model, train_x)
-prediction_train <- max.col(t(preds)) - 1
+prediction_train <- max.col(t(prediction_layer_train)) - 1
 
 accuracy(test_y, prediction)
 accuracy(test_y, most_common(train_y))
