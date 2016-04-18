@@ -6,11 +6,8 @@ class Hand(list):
 
     def is_complete(self):
         """Return True if a hand is complete."""
-        if len(self) != 5:
-            return False
-
         # Check if the hand is 3, 2 or 2, 1, 1, 1 or 3, 1, 1
-        # Can't be complete if neither of these combinations
+        # Can't be complete if not any of these combinations
         count_trace = self.get_count_trace()
         if count_trace == [3, 2]:
             return True
@@ -19,6 +16,8 @@ class Hand(list):
             alleged_set = self.remove_pair(self)
             if self.is_sequence(alleged_set):
                 return True
+
+        return False
 
     def get_count_trace(self):
         """Return a list of sorted counts for tiles in hand."""
@@ -38,7 +37,7 @@ class Hand(list):
 
         if len(numbers) != 3:
             return False
-        if max(numbers) - min(numbers) == 2:
+        if max(numbers) - min(numbers) == 2 and len(set(numbers)) == 3:
             return True
 
         return False
