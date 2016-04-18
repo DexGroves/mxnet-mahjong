@@ -1,3 +1,5 @@
+#!/bin/env python2.7
+
 import random
 from code.hand import Hand
 from code.mahjong_player import MahjongPlayer
@@ -42,7 +44,7 @@ def tiles_to_numeric_vector(tiles, max_len, tileset):
 
 
 # Hyperparameters
-n_trials = 2000
+n_trials = 30000
 max_len = 10
 
 
@@ -56,7 +58,7 @@ f = open('data/ponds.csv', 'w')
 for i in xrange(n_trials):
     pond, winning_tile = generate_pond(player, max_len, tileset)
 
-    if winning_tile is not None:
+    if winning_tile is not None and winning_tile not in pond:
         pond_ind = tiles_to_numeric_vector(pond, max_len, unique_tiles)
         winning_tile_ind = tiles_to_numeric_vector(
             winning_tile, 1, unique_tiles)
