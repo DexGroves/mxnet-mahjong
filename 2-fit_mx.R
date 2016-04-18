@@ -25,55 +25,56 @@ train_x <- discards[1:train_n, ]
 test_y <- winning_tiles[(train_n + 1):length(winning_tiles)]
 test_x <- discards[(train_n + 1):length(winning_tiles), ]
 
+storage.mode(train_x) <- "double"
+storage.mode(train_y) <- "double"
+storage.mode(test_x) <- "double"
+storage.mode(test_y) <- "double"
 
+# Fit the net -----------------------------------------------------------------
 mx.set.seed(0)
 mx_model <- mx.mlp(train_x,
                    train_y,
-                   num.round = 2000,
-                   hidden_node = c(13),
+                   num.round = 1000,
+                   hidden_node = c(13, 6),
                    activation = "relu",
                    out_activation = "softmax",
                    out_node = 12,
-                   array.batch.size = 100,
-                   learning.rate = 0.01,
+                   array.batch.size = 60,
+                   learning.rate = 0.02,
                    momentum = 0.1,
                    array.layout = "rowmajor",
                    # initializer = mx.init.normal(1),
-                   initializer=mx.init.uniform(0.07),
+                   initializer=mx.init.uniform(0.1),
                    eval.metric = mx.metric.accuracy)
 
-
-prediction_layer <- predict(mx_model, test_x)
-prediction <- max.col(t(prediction_layer)) - 1
-table(prediction)
+# Evaluate how bad it is ------------------------------------------------------
+prediction_layer_test <- predict(mx_model, test_x)
+prediction_test <- max.col(t(prediction_layer_test)) - 1
+table(prediction_test)
 
 prediction_layer_train <- predict(mx_model, train_x)
 prediction_train <- max.col(t(prediction_layer_train)) - 1
 
-accuracy(test_y, prediction)
+accuracy(test_y, prediction_test)
 accuracy(test_y, most_common(train_y))
 accuracy(train_y, prediction_train)
 accuracy(train_y, most_common(train_y))
 
-# Dragons below ---------------------------------------------------------------
-# data <- mx.symbol.Variable("data")
-# fc1 <- mx.symbol.FullyConnected(data, name="fc1", num_hidden=128)
-# act1 <- mx.symbol.Activation(fc1, name="relu1", act_type="relu")
-# fc2 <- mx.symbol.FullyConnected(act1, name="fc2", num_hidden=64)
-# act2 <- mx.symbol.Activation(fc2, name="relu2", act_type="relu")
-# fc3 <- mx.symbol.FullyConnected(act2, name="fc3", num_hidden=10)
-# softmax <- mx.symbol.SoftmaxOutput(fc3, name="sm")
-# devices <- mx.cpu()
+# xgboost thrashes it ---------------------------------------------------------
+library("xgboost")
 
-# mx.set.seed(0)
-# model <- mx.model.FeedForward.create(softmax, X=train.x, y=train.y,
-#                                      ctx=devices, num.round=10, array.batch.size=100,
-#                                      learning.rate=0.07, momentum=0.9,  eval.metric=mx.metric.accuracy,
-#                                      initializer=mx.init.uniform(0.07),
-#                                      epoch.end.callback=mx.callback.log.train.metric(100))
+train_dm <- xgb.DMatrix(train_x, label = train_y)
+test_dm <- xgb.DMatrix(test_x, label = test_y)
 
-# preds <- predict(model, test)
-# dim(preds)
+xg_model <- xgb.train(params = list(eta = 0.1,
+                                    max_depth = 3,
+                                    min_child_weight = 5,
+                                    subsample = 0.75,
+                                    colsample_bytree = 0.75,
+                                    num_class = 12),
+                      objective = "multi:softmax",
+                      data = train_dm,
+                      nrounds = 100)
 
-# pred.label <- max.col(t(preds)) - 1
-# table(pred.label)
+test_pred_xgb <- predict(xg_model, newdata = test_dm)
+accuracy(test_y, test_pred_xgb)
