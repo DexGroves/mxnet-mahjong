@@ -8,8 +8,23 @@ accuracy <- function(y, u) {
   sum(y == u) / length(y)
 }
 
+#' Find the most common element of a numeric vector
 most_common <- function(y) {
   as.numeric(names(sort(table(y), decreasing = TRUE)))[1]
+}
+
+#' Predict the most common element of the train response, unless it
+#' exists in the holdout row
+common_unless_furiten <- function(holdout_matrix, train_y) {
+  common_unless_furiten_row <- function(row, train_common) {
+    populated <- which(row != 0)
+    remaining_this_row <- train_common[!train_common %in% populated]
+    remaining_this_row[1]
+  }
+
+  train_common <- as.numeric(names(sort(table(train_y), decreasing = TRUE)))
+  apply(holdout_matrix, 1, common_unless_furiten_row,
+        train_common = train_common)
 }
 
 train_n <- 5000
@@ -35,15 +50,15 @@ mx.set.seed(0)
 mx_model <- mx.mlp(train_x,
                    train_y,
                    num.round = 1000,
-                   hidden_node = c(13),
+                   hidden_node = c(13, 6, 6, 12),
                    activation = "relu",
                    out_activation = "softmax",
                    out_node = 12,
-                   array.batch.size = 500,
-                   learning.rate = 0.1,
+                   array.batch.size = 76,
+                   learning.rate = 0.5,
                    momentum = 0.1,
                    array.layout = "rowmajor",
-                   initializer=mx.init.uniform(0.1),
+                   initializer = mx.init.uniform(0.1),
                    # initializer = mx.init.normal(1),
                    eval.metric = mx.metric.accuracy)
 
@@ -55,18 +70,20 @@ table(prediction_test)
 prediction_layer_train <- predict(mx_model, train_x)
 prediction_train <- max.col(t(prediction_layer_train)) - 1
 
-accuracy(test_y, prediction_test)
-accuracy(test_y, most_common(train_y))
 accuracy(train_y, prediction_train)
 accuracy(train_y, most_common(train_y))
+accuracy(train_y, common_unless_furiten(train_x, train_y))
+accuracy(test_y, prediction_test)
+accuracy(test_y, most_common(train_y))
+accuracy(test_y, common_unless_furiten(test_x, train_y))
 
-# xgboost thrashes it ---------------------------------------------------------
+# xgboost to do the same ------------------------------------------------------
 library("xgboost")
 
 train_dm <- xgb.DMatrix(train_x, label = train_y)
 test_dm <- xgb.DMatrix(test_x, label = test_y)
 
-xg_model <- xgb.train(params = list(eta = 0.1,
+xg_model <- xgb.train(params = list(eta = 0.01,
                                     max_depth = 3,
                                     min_child_weight = 5,
                                     subsample = 0.75,
@@ -78,3 +95,8 @@ xg_model <- xgb.train(params = list(eta = 0.1,
 
 test_pred_xgb <- predict(xg_model, newdata = test_dm)
 accuracy(test_y, test_pred_xgb)
+
+# Always 6:          0.1996301
+# Furiten heuristic: 0.2021912
+# PB mxnet:          0.2243882
+# PB xgboost:        0.2239613
