@@ -48,8 +48,8 @@ n_trials = 3000
 max_len = 10
 
 
-tile_labels = ['1s', '2s', '3s', '4s', '5s', '6s', '7s', '8s', '9s',
-               'Wd', 'Ew', 'Sw']
+tile_labels = ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8', 's9',
+               'dW', 'wE', 'wS']
 unique_tiles = [Tile(x) for x in tile_labels]
 tileset = unique_tiles + unique_tiles + unique_tiles
 
