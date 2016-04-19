@@ -13,3 +13,31 @@ class Tile(str):
         if self.rank() == -1:
             return False
         return True
+
+
+class Tiles(list):
+    """A collection of tiles."""
+
+    def is_pair(self):
+        if len(self) == 2 and len(set(self)) == 1:
+            return True
+        return False
+
+    def is_jun(self):
+        nbr_tiles = set([t for t in self if t.rank() != -1])
+        suits = set([tile.suit() for tile in self])
+        ranks = set([tile.rank() for tile in self])
+
+        if len(self) != 3:
+            return False
+
+        if len(suits) != 1 or suits == {'w'} or suits == {'d'}:
+            return False
+
+        if len(ranks) != 3:
+            return False
+
+        if max(ranks) - min(ranks) == 2:
+            return True
+
+        return False

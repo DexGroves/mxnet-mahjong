@@ -1,4 +1,5 @@
 import copy
+import collections
 
 
 class MahjongPlayer(object):
@@ -7,11 +8,10 @@ class MahjongPlayer(object):
     def __init__(self):
         pass
 
-    @staticmethod
-    def make_discard(hand):
+    def make_discard(self, hand):
         c_hand = copy.copy(hand)
 
-        unpaired = c_hand.get_unpaired()
+        unpaired = self.get_unpaired(c_hand)
 
         # One unpaired tile? Discard it! Shanpon waits are good (!)
         if len(unpaired) == 1:
@@ -34,3 +34,9 @@ class MahjongPlayer(object):
         c_hand.remove(str(min_unpaired))
 
         return str(min_unpaired), c_hand
+
+    @staticmethod
+    def get_unpaired(hand):
+        """Return a hand's unpaired tiles."""
+        tile_count = collections.Counter(hand).most_common()
+        return [name for name, count in tile_count if count == 1]

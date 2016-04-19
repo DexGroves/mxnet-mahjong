@@ -1,57 +1,44 @@
 import collections
+from code.tile import Tiles
 
 
-class Hand(list):
-    """Mahjong hand logic."""
+class Hand(Tiles):
+    """A mahjong hand."""
 
     def is_complete(self):
-        """Return True if a hand is complete."""
-        # Check if the hand is 3, 2 or 2, 1, 1, 1 or 3, 1, 1
-        # Can't be complete if not any of these combinations
-        count_trace = self.get_count_trace()
-        if count_trace == [3, 2]:
+        """
+        Recurse over self, removing possible sets, and test if any
+        of the paths end in a pair.
+        """
+
+        if self.is_pair():
             return True
 
-        if count_trace in [[2, 1, 1, 1], [3, 1, 1]]:
-            alleged_set = self.remove_pair(self)
-            if self.is_sequence(alleged_set):
+        for possible_set in self.get_possible_sets():
+            remaining_hand = Hand(self.remove_tiles(possible_set))
+            if remaining_hand.is_complete():
                 return True
 
         return False
 
-    def get_count_trace(self):
-        """Return a list of sorted counts for tiles in hand."""
-        return [counts for _, counts in
-                collections.Counter(self).most_common()]
+    def get_possible_sets(self):
+        return self.get_possible_ankou() + self.get_possible_jun()
 
-    def get_unpaired(self):
-        """Return a hand's unpaired tiles."""
-        tile_count = collections.Counter(self).most_common()
-        return [name for name, count in tile_count if count == 1]
+    def get_possible_ankou(self):
+        tile_counter = collections.Counter(self).most_common()
+        return [[t]*3 for t, count in tile_counter if count > 2]
 
-    @staticmethod
-    def is_sequence(tiles):
-        numbers = [x.rank() for x in tiles if x.is_number_tile()]
+    def get_possible_jun(self):
+        num_tiles = Tiles(set([t for t in self
+                               if t.is_number_tile()]))
 
-        if len(numbers) != 3:
-            return False
-        if max(numbers)-min(numbers) == 2 and len(set(numbers)) == 3:
-            return True
+        output_jun = []
+        for i in xrange(len(num_tiles) - 2):
+            possible_jun = Tiles(num_tiles[i:(i+3)])
+            if possible_jun.is_jun():
+                output_jun += [possible_jun]
 
-        return False
+        return output_jun
 
-    @staticmethod
-    def remove_pair(hand):
-        """Remove the first available pair from a hand."""
-        shand = sorted(hand)
-        last_tile = '-1'
-
-        for tile in shand:
-            if tile == last_tile:
-                shand.remove(tile)
-                shand.remove(tile)
-                return shand
-            else:
-                last_tile = tile
-
-        raise ValueError("No pair found!")
+    def remove_tiles(self, tiles):
+        return [t for t in self if not t in tiles or tiles.remove(t)]
