@@ -41,3 +41,6 @@ class Tiles(list):
             return True
 
         return False
+
+    def remove_tiles(self, tiles):
+        return [t for t in self if not t in tiles or tiles.remove(t)]

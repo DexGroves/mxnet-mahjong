@@ -1,4 +1,5 @@
 import collections
+import numpy as np
 from code.tile import Tiles
 
 
@@ -29,8 +30,7 @@ class Hand(Tiles):
         return [[t]*3 for t, count in tile_counter if count > 2]
 
     def get_possible_jun(self):
-        num_tiles = Tiles(set([t for t in self
-                               if t.is_number_tile()]))
+        num_tiles = Tiles(set([t for t in self if t.is_number_tile()]))
 
         output_jun = []
         for i in xrange(len(num_tiles) - 2):
@@ -39,6 +39,3 @@ class Hand(Tiles):
                 output_jun += [possible_jun]
 
         return output_jun
-
-    def remove_tiles(self, tiles):
-        return [t for t in self if not t in tiles or tiles.remove(t)]
