@@ -45,12 +45,15 @@ def tiles_to_numeric_vector(tiles, max_len, tileset):
 
 
 # Hyperparameters
-n_trials = 3000
-max_len = 10
+n_trials = 30000
+max_len = 18
 
 
 tile_labels = ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8', 's9',
-               'dW', 'wE', 'wS']
+               'p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9',
+               'm1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8', 'm9',
+               'wE', 'wS', 'wW', 'wN',
+               'dW', 'dG', 'dR']
 unique_tiles = [Tile(x) for x in tile_labels]
 tileset = unique_tiles + unique_tiles + unique_tiles
 
@@ -66,7 +69,7 @@ for i in xrange(n_trials):
             pond, max_len, unique_tiles)
         winning_tile_ind = unique_tiles.index(winning_tile)
 
-        out_vec = [0] * 12
+        out_vec = [0] * len(tile_labels)
         n = 1
         for tile in [x for x in pond_ind if x != -1]:
             out_vec[tile] = n
