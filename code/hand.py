@@ -31,7 +31,7 @@ class Hand(list):
 
     @staticmethod
     def is_sequence(tiles):
-        numbers = [x.get_rank() for x in tiles if x.is_number_tile()]
+        numbers = [x.rank() for x in tiles if x.is_number_tile()]
 
         if len(numbers) != 3:
             return False
