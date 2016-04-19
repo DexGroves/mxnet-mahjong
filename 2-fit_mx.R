@@ -8,6 +8,25 @@ accuracy <- function(y, u) {
   sum(y == u) / length(y)
 }
 
+mv_binomial_deviance <- function(y, U, n_classes = length(unique(y)),
+                                 cap = TRUE) {
+  binomial_deviance <- function(y, u, w = rep(1, length(y))){
+    l <- sum(w[y == 1] * y[y == 1] * log(y[y == 1] / u[y == 1])) +
+         sum(w[y == 0] * log(1/(1 - u[y == 0])))
+    2 * l
+  }
+
+  if (cap) {
+    U[U < 0.001] <- 0.001
+    U[U > 0.999] <- 0.999
+
+  }
+
+  deviances <- sapply(
+    1:n_classes, function(n) binomial_deviance(as.numeric(y == n), U[n, ]))
+  sum(deviances)
+}
+
 #' Find the most common element of a numeric vector
 most_common <- function(y) {
   as.numeric(names(sort(table(y), decreasing = TRUE)))[1]
@@ -27,7 +46,7 @@ common_unless_furiten <- function(holdout_matrix, train_y) {
         train_common = train_common)
 }
 
-train_n <- 5000
+train_n <- 4000
 
 ponds <- fread("data/ponds.csv")
 
@@ -49,16 +68,16 @@ storage.mode(test_y) <- "double"
 mx.set.seed(0)
 mx_model <- mx.mlp(train_x,
                    train_y,
-                   num.round = 1000,
-                   hidden_node = c(13, 6, 6, 12),
+                   num.round = 250,
+                   hidden_node = c(34, 34),
                    activation = "relu",
                    out_activation = "softmax",
-                   out_node = 12,
-                   array.batch.size = 76,
+                   out_node = 34,
+                   array.batch.size = 100,
                    learning.rate = 0.5,
                    momentum = 0.1,
                    array.layout = "rowmajor",
-                   initializer = mx.init.uniform(0.1),
+                   initializer = mx.init.uniform(0.05),
                    # initializer = mx.init.normal(1),
                    eval.metric = mx.metric.accuracy)
 
@@ -76,6 +95,8 @@ accuracy(train_y, common_unless_furiten(train_x, train_y))
 accuracy(test_y, prediction_test)
 accuracy(test_y, most_common(train_y))
 accuracy(test_y, common_unless_furiten(test_x, train_y))
+
+mv_binomial_deviance(test_y, prediction_layer_test)
 
 # xgboost to do the same ------------------------------------------------------
 library("xgboost")
