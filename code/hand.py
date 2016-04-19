@@ -1,5 +1,4 @@
 import collections
-import numpy as np
 from code.tile import Tiles
 
 
@@ -31,9 +30,10 @@ class Hand(Tiles):
 
     def get_possible_jun(self):
         num_tiles = Tiles(set([t for t in self if t.is_number_tile()]))
+        num_tiles.sort()
 
         output_jun = []
-        for i in xrange(len(num_tiles) - 2):
+        for i in xrange(len(num_tiles) - 1):
             possible_jun = Tiles(num_tiles[i:(i+3)])
             if possible_jun.is_jun():
                 output_jun += [possible_jun]
