@@ -2,6 +2,7 @@
 
 library("data.table")
 library("mxnet")
+library("hacktoolkit") # devtools::install_github("DexGroves/hacktoolkit")
 
 
 accuracy <- function(y, u) {
@@ -68,13 +69,13 @@ storage.mode(test_y) <- "double"
 mx.set.seed(0)
 mx_model <- mx.mlp(train_x,
                    train_y,
-                   num.round = 250,
-                   hidden_node = c(34, 34),
-                   activation = "relu",
+                   num.round = 200,
+                   hidden_node = c(6),
+                   activation = "tanh",
                    out_activation = "softmax",
                    out_node = 34,
                    array.batch.size = 100,
-                   learning.rate = 0.5,
+                   learning.rate = 0.4,
                    momentum = 0.1,
                    array.layout = "rowmajor",
                    initializer = mx.init.uniform(0.05),
@@ -90,13 +91,14 @@ prediction_layer_train <- predict(mx_model, train_x)
 prediction_train <- max.col(t(prediction_layer_train)) - 1
 
 accuracy(train_y, prediction_train)
-accuracy(train_y, most_common(train_y))
-accuracy(train_y, common_unless_furiten(train_x, train_y))
+
 accuracy(test_y, prediction_test)
 accuracy(test_y, most_common(train_y))
 accuracy(test_y, common_unless_furiten(test_x, train_y))
 
 mv_binomial_deviance(test_y, prediction_layer_test)
+multivariate_auc(test_y, prediction_layer_test)
+# 0.6262689 tanh, 200, c(6), 0.4/0.1, 100
 
 # xgboost to do the same ------------------------------------------------------
 library("xgboost")
@@ -109,15 +111,10 @@ xg_model <- xgb.train(params = list(eta = 0.01,
                                     min_child_weight = 5,
                                     subsample = 0.75,
                                     colsample_bytree = 0.75,
-                                    num_class = 12),
+                                    num_class = 34),
                       objective = "multi:softmax",
                       data = train_dm,
                       nrounds = 100)
 
 test_pred_xgb <- predict(xg_model, newdata = test_dm)
 accuracy(test_y, test_pred_xgb)
-
-# Always 6:          0.1996301
-# Furiten heuristic: 0.2021912
-# PB mxnet:          0.2243882
-# PB xgboost:        0.2239613
