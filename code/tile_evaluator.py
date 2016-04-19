@@ -9,6 +9,14 @@ class TileEvaluator(object):
     def __init__(self):
         pass
 
+    def evaluate_optimal_cut(self, hand):
+        """Calculate the optimal discard!"""
+        useless_tile_sets = self.get_useless_tiles(hand)
+        optimal_cuts = [self.get_optimal_cut_from_group(x)
+                        for x in useless_tile_sets]
+        max_score = max([s for t, s in optimal_cuts])
+        return [t for t, s in optimal_cuts if s == max_score][0]
+
     def get_useless_tiles(self, hand):
         """
         Get all possible sets of leftover tiles by recursively
@@ -26,7 +34,7 @@ class TileEvaluator(object):
             leftover_sets = [self.unlist(x) for x in leftover_sets]
         return leftover_sets
 
-    def score_tiles_in_leftovers(self, leftovers):
+    def get_optimal_cut_from_group(self, leftovers):
         """
         Score the value add of removing each tile in a set of leftovers.
         """
@@ -34,8 +42,10 @@ class TileEvaluator(object):
         for tile in leftovers:
             score = self.score_leftover_group(
                 sorted(leftovers.remove_tiles([tile])))
-            tilescores += tile, score
-        return tilescores
+            tilescores += [(tile, score)]
+
+        max_score = max([s for t, s in tilescores])
+        return [t for t, s in tilescores if s == max_score][0], max_score
 
     def score_leftover_group(self, leftovers):
         """
@@ -163,56 +173,3 @@ class TileEvaluator(object):
         if type(l) == list:
             return l[0]
         return l
-
-    # @staticmethod
-    # def which_in_set(hand, set_fn):
-    #     """
-    #     Returns boolean vector of whether a tile is returned by set_fn.
-    #     """
-    #     set_inclusion = np.zeros(len(hand))
-    #     for possible_set in set_fn(hand):
-    #         set_inclusion = np.vstack([
-    #             set_inclusion,
-    #             np.array([1 if t in possible_set else 0 for t in hand])
-    #         ])
-
-    #     return sum(sum(set_inclusion))
-
-    # @staticmethod
-    # def get_possible_ryanmen(hand):
-    #     tanyao_tiles = [t for t in hand if t.rank() > 1 and t.rank() < 9]
-    #     hand_sort = sorted(hand)
-
-    #     ryanmen_tiles = []
-    #     for i in xrange(len(hand_sort) - 1):
-    #         tile_pair = Tiles(hand_sort[i:(i+2)])
-    #         if tile_pair.is_ryanmen():
-    #             ryanmen_tiles += tile_pair
-
-    #     return [1 if t in ryanmen_tiles else 0 for t in hand]
-
-    # @staticmethod
-    # def get_possible_ryanmen(hand):
-    #     tanyao_tiles = [t for t in hand if t.rank() > 1 and t.rank() < 9]
-    #     hand_sort = sorted(hand)
-
-    #     ryanmen_tiles = []
-    #     for i in xrange(len(hand_sort) - 1):
-    #         tile_pair = Tiles(hand_sort[i:(i+2)])
-    #         if tile_pair.is_ryanmen():
-    #             ryanmen_tiles += tile_pair
-
-    #     return [1 if t in ryanmen_tiles else 0 for t in hand]
-
-    # @staticmethod
-    # def get_possible_penchan(hand):
-    #     tanyao_tiles = [t for t in hand if t.rank() > 1 and t.rank() < 9]
-    #     hand_sort = sorted(hand)
-
-    #     ryanmen_tiles = []
-    #     for i in xrange(len(hand_sort) - 1):
-    #         tile_pair = Tiles(hand_sort[i:(i+2)])
-    #         if tile_pair.is_ryanmen():
-    #             ryanmen_tiles += tile_pair
-
-    #     return [1 if t in ryanmen_tiles else 0 for t in hand]
