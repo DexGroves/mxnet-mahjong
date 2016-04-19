@@ -96,9 +96,13 @@ def test_get_optimal_cut_from_leftovers():
 
 
 def test_evaluate_optimal_cut():
-
     test_hand = Hand([Tile(x) for x in ['s1', 's1', 's1', 's2', 's3', 's4',
                                         's5', 's7', 'dW', 'wE']])
     cut = te.evaluate_optimal_cut(test_hand)
 
     assert cut in ['dW', 'wE']
+
+    no_melds = Hand([Tile(x) for x in ['s7', 's4', 's1', 's8', 's1']])
+    cut = te.evaluate_optimal_cut(no_melds)
+
+    assert cut == 's4'

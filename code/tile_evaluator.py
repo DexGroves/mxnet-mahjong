@@ -25,13 +25,14 @@ class TileEvaluator(object):
         possible_melds = hand.get_possible_sets()
 
         if len(possible_melds) == 0:
-            return hand
+            return [hand]
 
         leftover_sets = []
         for meld in possible_melds:
             remaining_hand = Hand(hand.remove_tiles(meld))
             leftover_sets += [(self.get_useless_tiles(remaining_hand))]
             leftover_sets = [self.unlist(x) for x in leftover_sets]
+
         return leftover_sets
 
     def get_optimal_cut_from_group(self, leftovers):

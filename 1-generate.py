@@ -20,7 +20,8 @@ def generate_pond(player, max_len, tileset):
         if hand.is_complete():
             return discard_pile, hand[len(hand) - 1]
         else:
-            discard, hand = player.make_discard(hand)
+            discard = player.make_discard(hand)
+            hand = Hand(hand.remove_tiles([discard]))
             discard_pile.append(discard)
             hand.append(wall.pop(0))
 
