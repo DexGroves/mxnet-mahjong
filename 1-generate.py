@@ -1,6 +1,7 @@
 #!/bin/env python2.7
 
 import random
+from code.tile import Tile
 from code.hand import Hand
 from code.mahjong_player import MahjongPlayer
 
@@ -43,11 +44,13 @@ def tiles_to_numeric_vector(tiles, max_len, tileset):
 
 
 # Hyperparameters
-n_trials = 30000
+n_trials = 3000
 max_len = 10
 
 
-unique_tiles = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'D', 'E', 'S']
+tile_labels = ['1s', '2s', '3s', '4s', '5s', '6s', '7s', '8s', '9s',
+               'Wd', 'Ew', 'Sw']
+unique_tiles = [Tile(x) for x in tile_labels]
 tileset = unique_tiles + unique_tiles + unique_tiles
 
 player = MahjongPlayer()
@@ -58,9 +61,9 @@ for i in xrange(n_trials):
     pond, winning_tile = generate_pond(player, max_len, tileset)
 
     if winning_tile is not None and winning_tile not in pond:
-        pond_ind = tiles_to_numeric_vector(pond, max_len, unique_tiles)
-        winning_tile_ind = tiles_to_numeric_vector(
-            winning_tile, 1, unique_tiles)
+        pond_ind = tiles_to_numeric_vector(
+            pond, max_len, unique_tiles)
+        winning_tile_ind = unique_tiles.index(winning_tile)
 
         out_vec = [0] * 12
         n = 1
@@ -68,7 +71,7 @@ for i in xrange(n_trials):
             out_vec[tile] = n
             n += 1
 
-        out_str = ','.join([str(winning_tile_ind[0]),
+        out_str = ','.join([str(winning_tile_ind),
                             ','.join([str(x) for x in out_vec])])
 
         f.write(out_str + '\n')

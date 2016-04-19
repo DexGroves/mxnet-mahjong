@@ -31,13 +31,11 @@ class Hand(list):
 
     @staticmethod
     def is_sequence(tiles):
-        numbers = [x for x in tiles
-                   if x in ['1', '2', '3', '4', '5', '6', '7', '8', '9']]
-        numbers = [int(x) for x in numbers]
+        numbers = [x.get_rank() for x in tiles if x.is_number_tile()]
 
         if len(numbers) != 3:
             return False
-        if max(numbers) - min(numbers) == 2 and len(set(numbers)) == 3:
+        if max(numbers)-min(numbers) == 2 and len(set(numbers)) == 3:
             return True
 
         return False

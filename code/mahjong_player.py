@@ -19,17 +19,18 @@ class MahjongPlayer(object):
             return unpaired[0], c_hand
 
         # Particularly useless unpaired tiles? Discard!
-        if 'S' in unpaired:
-            c_hand.remove('S')
-            return 'S', c_hand
-        if 'E' in unpaired:
-            c_hand.remove('E')
-            return 'E', c_hand
-        if 'D' in unpaired:
-            c_hand.remove('D')
-            return 'D', c_hand
+        if 'Sw' in unpaired:
+            c_hand.remove('Sw')
+            return 'Sw', c_hand
+        if 'Ew' in unpaired:
+            c_hand.remove('Ew')
+            return 'Ew', c_hand
+        if 'Wd' in unpaired:
+            c_hand.remove('Wd')
+            return 'Wd', c_hand
 
         # Else discard the lowest number. A laughable strategy.
-        min_unpaired = min([int(x) for x in unpaired])
+        min_unpaired = sorted(unpaired)[0]
         c_hand.remove(str(min_unpaired))
+
         return str(min_unpaired), c_hand
