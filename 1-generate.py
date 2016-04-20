@@ -72,9 +72,9 @@ for i in xrange(n_trials):
         out_vec = [0] * len(tile_labels)
         n = 1
         for tile in [x for x in pond_ind if x != -1]:
-            out_vec[tile] = n
+            if out_vec[tile] == 0:
+                out_vec[tile] = n
             n += 1
-
         out_str = ','.join([str(winning_tile_ind),
                             ','.join([str(x) for x in out_vec])])
 
