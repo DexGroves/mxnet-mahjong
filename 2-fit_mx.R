@@ -28,13 +28,13 @@ mv_binomial_deviance <- function(y, U, n_classes = length(unique(y)),
   sum(deviances)
 }
 
-#' Find the most common element of a numeric vector
+#" Find the most common element of a numeric vector
 most_common <- function(y) {
   as.numeric(names(sort(table(y), decreasing = TRUE)))[1]
 }
 
-#' Predict the most common element of the train response, unless it
-#' exists in the holdout row
+#" Predict the most common element of the train response, unless it
+#" exists in the holdout row
 common_unless_furiten <- function(holdout_matrix, train_y) {
   common_unless_furiten_row <- function(row, train_common) {
     populated <- which(row != 0)
@@ -92,7 +92,7 @@ reorder_ysuits_row <- function(X, y) {
 }
 
 # Program body ---------------------------------------------------------------
-train_n <- 2000
+train_n <- 100000
 
 ponds <- fread("data/ponds.csv")
 
@@ -103,9 +103,6 @@ Xreorder <- t(apply(X, 1, reorder_Xsuits_row))
 yreorder <- unlist(sapply(seq_along(y),
                           function(i) reorder_ysuits_row(X[i, ], y[i])))
 
-# Xreorder <- X
-# yreorder <- y
-#
 train_y <- yreorder[1:train_n]
 train_x <- Xreorder[1:train_n, ]
 
@@ -122,12 +119,13 @@ mx.set.seed(0)
 mx_model <- mx.mlp(train_x,
                    train_y,
                    num.round = 500,
-                   hidden_node = c(6, 6),
+                   hidden_node = c(12, 6),
                    activation = "tanh",
                    out_activation = "softmax",
                    out_node = 34,
-                   array.batch.size = 50,
-                   learning.rate = 0.05,
+                   array.batch.size = 100,
+                   learning.rate = 0.15,
+                   dropout = 0.1,
                    momentum = 0.1,
                    array.layout = "rowmajor",
                    initializer = mx.init.uniform(0.05),
@@ -169,5 +167,50 @@ xg_model <- xgb.train(params = list(eta = 0.01,
                       data = train_dm,
                       nrounds = 100)
 
+xg_model <- xgb.cv(params = list(eta = 0.01,
+                                    max_depth = 3,
+                                    min_child_weight = 5,
+                                    subsample = 0.75,
+                                    colsample_bytree = 0.75,
+                                    num_class = 34),
+                      objective = "multi:softmax",
+                      data = train_dm,
+                      nrounds = 100,
+                      nfold = 4)
+
 test_pred_xgb <- predict(xg_model, newdata = test_dm)
 accuracy(test_y, test_pred_xgb)
+
+# Methods to score a pond -----------------------------------------------------
+tileset <- c("s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9",
+             "p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9",
+             "m1", "m2", "m3", "m4", "m5", "m6", "m7", "m8", "m9",
+             "wE", "wS", "wW", "wN",
+             "dW", "dG", "dR")
+
+tiles_to_vec <- function(pond_char) {
+  pond_vec <- sapply(pond_char, function(x) which(x == tileset))
+  pond_binary <- rep(0, 34)
+
+  n <- 1
+  for (tile in pond_vec) {
+    if (pond_binary[tile] == 0) {
+      pond_binary[tile] <- n
+    }
+    n <- n + 1
+  }
+  pond_binary <- t(pond_binary)
+  names(pond_binary) <- tileset
+  pond_binary
+}
+
+test_pond <- c("wS", "dR", "s6", "m8", "p9", "m1", "m4", "p4")
+test_pond <- c("s6", "m8", "p9", "m1", "m4", "p4")
+
+pond_vec <- tiles_to_vec(test_pond)
+pond_vec_reorder <- reorder_Xsuits_row(pond_vec)
+
+pred_dt <- predict(mx_model, t(pond_vec_reorder)) %>%
+  {data.table(tile = names(pond_vec_reorder), prob = round(., 3))}
+
+pred_dt[order(prob.V1)]
