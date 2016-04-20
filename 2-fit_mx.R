@@ -47,18 +47,70 @@ common_unless_furiten <- function(holdout_matrix, train_y) {
         train_common = train_common)
 }
 
-train_n <- 4000
+reorder_Xsuits_row <- function(x) {
+  s1 <- x[1:9]
+  s2 <- x[10:18]
+  s3 <- x[19:27]
+
+  s1[s1 == 0] <- +Inf
+  s2[s2 == 0] <- +Inf
+  s3[s3 == 0] <- +Inf
+
+  map <- seq(34)
+
+  suit_first_appeared <- c(min(s1), min(s2), min(s3))
+  order_appeared <- order(suit_first_appeared)
+
+  map[1:27] <- rbind(seq(1, 9), seq(10, 18), seq(19, 27)) %>%
+    {.[order_appeared, ]} %>%
+    t %>%
+    as.numeric
+
+  x[map]
+}
+
+reorder_ysuits_row <- function(X, y) {
+  s1 <- X[1:9]
+  s2 <- X[10:18]
+  s3 <- X[19:27]
+
+  s1[s1 == 0] <- +Inf
+  s2[s2 == 0] <- +Inf
+  s3[s3 == 0] <- +Inf
+
+  map <- seq(34)
+
+  suit_first_appeared <- c(min(s1), min(s2), min(s3))
+  order_appeared <- order(suit_first_appeared)
+
+  map[1:27] <- rbind(seq(1, 9), seq(10, 18), seq(19, 27)) %>%
+    {.[order_appeared, ]} %>%
+    t %>%
+    as.numeric
+
+  which(map == y)
+}
+
+# Program body ---------------------------------------------------------------
+train_n <- 2000
 
 ponds <- fread("data/ponds.csv")
 
-winning_tiles <- as.numeric(ponds$V1)
-discards <- data.matrix(ponds[, -"V1", with = FALSE])
+y <- as.numeric(ponds$V1)
+X <- data.matrix(ponds[, -"V1", with = FALSE])
 
-train_y <- winning_tiles[1:train_n]
-train_x <- discards[1:train_n, ]
+Xreorder <- t(apply(X, 1, reorder_Xsuits_row))
+yreorder <- unlist(sapply(seq_along(y),
+                          function(i) reorder_ysuits_row(X[i, ], y[i])))
 
-test_y <- winning_tiles[(train_n + 1):length(winning_tiles)]
-test_x <- discards[(train_n + 1):length(winning_tiles), ]
+# Xreorder <- X
+# yreorder <- y
+#
+train_y <- yreorder[1:train_n]
+train_x <- Xreorder[1:train_n, ]
+
+test_y <- yreorder[(train_n + 1):length(yreorder)]
+test_x <- Xreorder[(train_n + 1):length(yreorder), ]
 
 storage.mode(train_x) <- "double"
 storage.mode(train_y) <- "double"
@@ -69,13 +121,13 @@ storage.mode(test_y) <- "double"
 mx.set.seed(0)
 mx_model <- mx.mlp(train_x,
                    train_y,
-                   num.round = 200,
-                   hidden_node = c(6),
+                   num.round = 500,
+                   hidden_node = c(6, 6),
                    activation = "tanh",
                    out_activation = "softmax",
                    out_node = 34,
-                   array.batch.size = 100,
-                   learning.rate = 0.4,
+                   array.batch.size = 50,
+                   learning.rate = 0.05,
                    momentum = 0.1,
                    array.layout = "rowmajor",
                    initializer = mx.init.uniform(0.05),
@@ -99,6 +151,7 @@ accuracy(test_y, common_unless_furiten(test_x, train_y))
 mv_binomial_deviance(test_y, prediction_layer_test)
 multivariate_auc(test_y, prediction_layer_test)
 # 0.6262689 tanh, 200, c(6), 0.4/0.1, 100
+# 0.6348107 ^ with reordering
 
 # xgboost to do the same ------------------------------------------------------
 library("xgboost")
