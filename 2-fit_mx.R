@@ -50,18 +50,16 @@ common_unless_furiten <- function(holdout_matrix, train_y) {
 reorder_Xsuits_row <- function(x) {
   s1 <- x[1:9]
   s2 <- x[10:18]
-  s3 <- x[19:27]
 
   s1[s1 == 0] <- +Inf
   s2[s2 == 0] <- +Inf
-  s3[s3 == 0] <- +Inf
 
-  map <- seq(34)
+  map <- seq(27)
 
-  suit_first_appeared <- c(min(s1), min(s2), min(s3))
+  suit_first_appeared <- c(min(s1), min(s2))
   order_appeared <- order(suit_first_appeared)
 
-  map[1:27] <- rbind(seq(1, 9), seq(10, 18), seq(19, 27)) %>%
+  map[1:27] <- rbind(seq(1, 9), seq(10, 18)) %>%
     {.[order_appeared, ]} %>%
     t %>%
     as.numeric
@@ -72,32 +70,33 @@ reorder_Xsuits_row <- function(x) {
 reorder_ysuits_row <- function(X, y) {
   s1 <- X[1:9]
   s2 <- X[10:18]
-  s3 <- X[19:27]
 
   s1[s1 == 0] <- +Inf
   s2[s2 == 0] <- +Inf
-  s3[s3 == 0] <- +Inf
 
-  map <- seq(34)
+  map <- seq(27)
 
-  suit_first_appeared <- c(min(s1), min(s2), min(s3))
+  suit_first_appeared <- c(min(s1), min(s2))
   order_appeared <- order(suit_first_appeared)
 
-  map[1:27] <- rbind(seq(1, 9), seq(10, 18), seq(19, 27)) %>%
+  map[1:27] <- rbind(seq(1, 9), seq(10, 18)) %>%
     {.[order_appeared, ]} %>%
     t %>%
     as.numeric
 
-  which(map == y)
+  which(map == y) - 1
 }
 
 # Program body ---------------------------------------------------------------
-train_n <- 100000
+train_n <- 500000
 
 ponds <- fread("data/ponds.csv")
 
 y <- as.numeric(ponds$V1)
 X <- data.matrix(ponds[, -"V1", with = FALSE])
+X <- X[, 1:18]
+X <- X[y %in% seq(0, 18), ]
+y <- y[y %in% seq(0, 18)]
 
 Xreorder <- t(apply(X, 1, reorder_Xsuits_row))
 yreorder <- unlist(sapply(seq_along(y),
@@ -109,22 +108,18 @@ train_x <- Xreorder[1:train_n, ]
 test_y <- yreorder[(train_n + 1):length(yreorder)]
 test_x <- Xreorder[(train_n + 1):length(yreorder), ]
 
-storage.mode(train_x) <- "double"
-storage.mode(train_y) <- "double"
-storage.mode(test_x) <- "double"
-storage.mode(test_y) <- "double"
-
 # Fit the net -----------------------------------------------------------------
 mx.set.seed(0)
-mx_model <- mx.mlp(train_x,
+mx_model <- mx.mlp(device = mx.gpu(1),
+                   train_x,
                    train_y,
-                   num.round = 500,
-                   hidden_node = c(12, 6),
+                   num.round = 200,
+                   hidden_node = c(27),
                    activation = "tanh",
                    out_activation = "softmax",
-                   out_node = 34,
+                   out_node = 18,
                    array.batch.size = 100,
-                   learning.rate = 0.15,
+                   learning.rate = 0.4,
                    dropout = 0.1,
                    momentum = 0.1,
                    array.layout = "rowmajor",
@@ -151,46 +146,16 @@ multivariate_auc(test_y, prediction_layer_test)
 # 0.6262689 tanh, 200, c(6), 0.4/0.1, 100
 # 0.6348107 ^ with reordering
 
-# xgboost to do the same ------------------------------------------------------
-library("xgboost")
-
-train_dm <- xgb.DMatrix(train_x, label = train_y)
-test_dm <- xgb.DMatrix(test_x, label = test_y)
-
-xg_model <- xgb.train(params = list(eta = 0.01,
-                                    max_depth = 3,
-                                    min_child_weight = 5,
-                                    subsample = 0.75,
-                                    colsample_bytree = 0.75,
-                                    num_class = 34),
-                      objective = "multi:softmax",
-                      data = train_dm,
-                      nrounds = 100)
-
-xg_model <- xgb.cv(params = list(eta = 0.01,
-                                    max_depth = 3,
-                                    min_child_weight = 5,
-                                    subsample = 0.75,
-                                    colsample_bytree = 0.75,
-                                    num_class = 34),
-                      objective = "multi:softmax",
-                      data = train_dm,
-                      nrounds = 100,
-                      nfold = 4)
-
-test_pred_xgb <- predict(xg_model, newdata = test_dm)
-accuracy(test_y, test_pred_xgb)
-
 # Methods to score a pond -----------------------------------------------------
 tileset <- c("s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9",
              "p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9",
-             "m1", "m2", "m3", "m4", "m5", "m6", "m7", "m8", "m9",
+             "m1", "m9",
              "wE", "wS", "wW", "wN",
              "dW", "dG", "dR")
 
 tiles_to_vec <- function(pond_char) {
   pond_vec <- sapply(pond_char, function(x) which(x == tileset))
-  pond_binary <- rep(0, 34)
+  pond_binary <- rep(0, 26)
 
   n <- 1
   for (tile in pond_vec) {
@@ -204,8 +169,8 @@ tiles_to_vec <- function(pond_char) {
   pond_binary
 }
 
-test_pond <- c("wS", "dR", "s6", "m8", "p9", "m1", "m4", "p4")
-test_pond <- c("s6", "m8", "p9", "m1", "m4", "p4")
+test_pond <- c("wS", "dR", "s6", "p8", "p9", "m1", "p4", "p4")
+test_pond <- c("s6", "m9", "p9", "m1", "m1", "p4")
 
 pond_vec <- tiles_to_vec(test_pond)
 pond_vec_reorder <- reorder_Xsuits_row(pond_vec)
@@ -214,3 +179,4 @@ pred_dt <- predict(mx_model, t(pond_vec_reorder)) %>%
   {data.table(tile = names(pond_vec_reorder), prob = round(., 3))}
 
 pred_dt[order(prob.V1)]
+

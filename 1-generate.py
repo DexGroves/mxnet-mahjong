@@ -51,18 +51,18 @@ max_len = 18
 
 tile_labels = ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8', 's9',
                'p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9',
-               'm1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8', 'm9',
+               'm1', 'm9',
                'wE', 'wS', 'wW', 'wN',
                'dW', 'dG', 'dR']
 unique_tiles = [Tile(x) for x in tile_labels]
-tileset = unique_tiles + unique_tiles + unique_tiles
+tileset = unique_tiles + unique_tiles + unique_tiles + unique_tiles
 
 player = MahjongPlayer()
 
 # Spam n_trials ponds and write to csv
 f = open('data/ponds.csv', 'w')
 for i in xrange(n_trials):
-    if i % 100 == 0: print i
+    print i
 
     pond, winning_tile = generate_pond(player, max_len, tileset)
 
