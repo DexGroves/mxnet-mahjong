@@ -59,11 +59,15 @@ class TileEvaluator(object):
 
         # The most important thing is being able to win
         if self.is_tenpai(leftovers):
-            score += 1e7
+            score += 1e8
 
-        # # Having at least one pair is preferable above all else
-        # if self.contains_pair(leftovers):
-        #     score += 1e6
+        # Having fewer leftover tiles is very important, but 2 or 5 optimal
+        if len(leftovers) > 5:
+            score -= len(leftovers) * 1e7
+
+        # Prefer to have at least one pair
+        if self.contains_pair(leftovers):
+            score += 1e6
 
         # Having ryanmen waits is fantastic
         score += 1e5 * self.count_matches(leftovers, self.is_ryanmen)
@@ -78,9 +82,9 @@ class TileEvaluator(object):
         score += 1e2 * self.count_matches(leftovers, self.is_penchan)
 
         # Number tiles are more valuable. Especially those closer to 5
-        ranks = [t.rank() for t in leftovers if t.rank() != -1]
+        ranks = [t.rank() for t in leftovers]
         for tile in ranks:
-            score += abs(5 - tile)
+            score -= abs(5 - tile)
 
         return score
 

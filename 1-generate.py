@@ -13,10 +13,10 @@ def generate_wall(tileset):
 def generate_pond(player, max_len, tileset):
     discard_pile = []
     wall = generate_wall(tileset)
-    hand = Hand(wall[0:5])
-    wall = wall[6:len(wall)]
+    hand = Hand(wall[0:14])
+    wall = wall[14:len(wall)]
 
-    while len(wall) > (len(tileset) - 4 - max_len):
+    while len(wall) > (len(tileset) - 13 - max_len):
         if hand.is_complete():
             return discard_pile, hand[len(hand) - 1]
         else:
@@ -45,7 +45,7 @@ def tiles_to_numeric_vector(tiles, max_len, tileset):
 
 
 # Hyperparameters
-n_trials = 30000
+n_trials = 3000000
 max_len = 18
 
 
@@ -62,6 +62,8 @@ player = MahjongPlayer()
 # Spam n_trials ponds and write to csv
 f = open('data/ponds.csv', 'w')
 for i in xrange(n_trials):
+    if i % 100 == 0: print i
+
     pond, winning_tile = generate_pond(player, max_len, tileset)
 
     if winning_tile is not None and winning_tile not in pond:
