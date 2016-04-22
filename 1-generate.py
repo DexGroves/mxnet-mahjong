@@ -14,9 +14,9 @@ def generate_pond(player, max_len, tileset):
     discard_pile = []
     wall = generate_wall(tileset)
     hand = Hand(wall[0:14])
-    wall = wall[14:len(wall)]
+    wall = wall[15:len(wall)]
 
-    while len(wall) > (len(tileset) - 13 - max_len):
+    while len(discard_pile) < max_len:
         if hand.is_complete():
             return discard_pile, hand[len(hand) - 1]
         else:
