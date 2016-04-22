@@ -92,7 +92,7 @@ reorder_ysuits_row <- function(X, y) {
 }
 
 # Program body ---------------------------------------------------------------
-train_n <- 80000
+train_n <- 100000
 
 ponds <- fread("data/ponds.csv")
 
@@ -112,22 +112,18 @@ train_x <- Xreorder[1:train_n, ]
 test_y <- yreorder[(train_n + 1):length(yreorder)]
 test_x <- Xreorder[(train_n + 1):length(yreorder), ]
 
-storage.mode(train_x) <- "double"
-storage.mode(train_y) <- "double"
-storage.mode(test_x) <- "double"
-storage.mode(test_y) <- "double"
-
 # Fit the net -----------------------------------------------------------------
 mx.set.seed(0)
-mx_model <- mx.mlp(train_x,
+mx_model <- mx.mlp(device = mx.gpu(1),
+                   train_x,
                    train_y,
-                   num.round = 350,
-                   hidden_node = c(14),
+                   num.round = 200,
+                   hidden_node = c(27),
                    activation = "tanh",
                    out_activation = "softmax",
                    out_node = 27,
                    array.batch.size = 100,
-                   learning.rate = 0.15,
+                   learning.rate = 0.4,
                    dropout = 0.1,
                    momentum = 0.1,
                    array.layout = "rowmajor",
@@ -153,36 +149,6 @@ mv_binomial_deviance(test_y, prediction_layer_test)
 multivariate_auc(test_y, prediction_layer_test)
 # 0.6262689 tanh, 200, c(6), 0.4/0.1, 100
 # 0.6348107 ^ with reordering
-
-# xgboost to do the same ------------------------------------------------------
-library("xgboost")
-
-train_dm <- xgb.DMatrix(train_x, label = train_y)
-test_dm <- xgb.DMatrix(test_x, label = test_y)
-
-xg_model <- xgb.train(params = list(eta = 0.01,
-                                    max_depth = 3,
-                                    min_child_weight = 5,
-                                    subsample = 0.75,
-                                    colsample_bytree = 0.75,
-                                    num_class = 34),
-                      objective = "multi:softmax",
-                      data = train_dm,
-                      nrounds = 100)
-
-xg_model <- xgb.cv(params = list(eta = 0.01,
-                                    max_depth = 3,
-                                    min_child_weight = 5,
-                                    subsample = 0.75,
-                                    colsample_bytree = 0.75,
-                                    num_class = 34),
-                      objective = "multi:softmax",
-                      data = train_dm,
-                      nrounds = 100,
-                      nfold = 4)
-
-test_pred_xgb <- predict(xg_model, newdata = test_dm)
-accuracy(test_y, test_pred_xgb)
 
 # Methods to score a pond -----------------------------------------------------
 tileset <- c("s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9",
