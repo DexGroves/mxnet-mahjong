@@ -145,7 +145,6 @@ mv_binomial_deviance(test_y, prediction_layer_test)
 multivariate_auc(test_y, prediction_layer_test)
 # 0.607 18 layer
 
-
 # Methods to score a pond -----------------------------------------------------
 tileset <- c("s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9",
              "p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9")
@@ -177,3 +176,41 @@ pred_dt <- predict(mx_model, t(pond_vec_reorder)) %>%
   {data.table(tile = names(pond_vec_reorder), prob = round(., 3))}
 
 pred_dt[order(prob.V1)]
+
+# xgboost to do the same ------------------------------------------------------
+library("xgboost")
+
+storage.mode(train_x) <- "double"
+storage.mode(train_y) <- "double"
+storage.mode(test_x) <- "double"
+storage.mode(test_y) <- "double"
+
+train_dm <- xgb.DMatrix(train_x, label = train_y)
+test_dm <- xgb.DMatrix(test_x, label = test_y)
+
+xgb_params <- list(eta = 0.01,
+                   max_depth = 1,
+                   min_child_weight = 10,
+                   subsample = 0.75,
+                   colsample_bytree = 0.75,
+                   num_class = 18)
+
+xg_model <- xgb.train(params = xgb_params,
+                      watchlist = list(train=train_dm, test=test_dm),
+                      eval.metric = "mlogloss",
+                      objective = "multi:softprob",
+                      data = train_dm,
+                      nrounds = 375)
+
+xg_model <- xgb.cv(params = xgb_params,
+                   objective = "multi:softprob",
+                   eval_metric = "mlogloss",
+                   data = train_dm,
+                   nrounds = 1000,
+                   nfold = 5)
+
+test_pred_xgb <- predict(xg_model, newdata = test_dm)
+accuracy(test_y, test_pred_xgb)
+xgboost_perf(xg_model)
+
+multivariate_auc(test_y, matrix(test_pred_xgb, nrow = 18))
