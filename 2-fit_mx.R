@@ -5,29 +5,6 @@ library("mxnet")
 library("hacktoolkit") # devtools::install_github("DexGroves/hacktoolkit")
 
 
-accuracy <- function(y, u) {
-  sum(y == u) / length(y)
-}
-
-mv_binomial_deviance <- function(y, U, n_classes = length(unique(y)),
-                                 cap = TRUE) {
-  binomial_deviance <- function(y, u, w = rep(1, length(y))){
-    l <- sum(w[y == 1] * y[y == 1] * log(y[y == 1] / u[y == 1])) +
-         sum(w[y == 0] * log(1/(1 - u[y == 0])))
-    2 * l
-  }
-
-  if (cap) {
-    U[U < 0.001] <- 0.001
-    U[U > 0.999] <- 0.999
-
-  }
-
-  deviances <- sapply(
-    1:n_classes, function(n) binomial_deviance(as.numeric(y == n), U[n, ]))
-  sum(deviances)
-}
-
 #" Find the most common element of a numeric vector
 most_common <- function(y) {
   as.numeric(names(sort(table(y), decreasing = TRUE)))[1]
