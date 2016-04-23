@@ -54,12 +54,12 @@ reorder_Xsuits_row <- function(x) {
   s1[s1 == 0] <- +Inf
   s2[s2 == 0] <- +Inf
 
-  map <- seq(27)
+  map <- seq(18)
 
   suit_first_appeared <- c(min(s1), min(s2))
   order_appeared <- order(suit_first_appeared)
 
-  map[1:27] <- rbind(seq(1, 9), seq(10, 18)) %>%
+  map[1:18] <- rbind(seq(1, 9), seq(10, 18)) %>%
     {.[order_appeared, ]} %>%
     t %>%
     as.numeric
@@ -74,12 +74,12 @@ reorder_ysuits_row <- function(X, y) {
   s1[s1 == 0] <- +Inf
   s2[s2 == 0] <- +Inf
 
-  map <- seq(27)
+  map <- seq(18)
 
   suit_first_appeared <- c(min(s1), min(s2))
   order_appeared <- order(suit_first_appeared)
 
-  map[1:27] <- rbind(seq(1, 9), seq(10, 18)) %>%
+  map[1:18] <- rbind(seq(1, 9), seq(10, 18)) %>%
     {.[order_appeared, ]} %>%
     t %>%
     as.numeric
@@ -88,15 +88,15 @@ reorder_ysuits_row <- function(X, y) {
 }
 
 # Program body ---------------------------------------------------------------
-train_n <- 500000
+train_n <- 17000
 
 ponds <- fread("data/ponds.csv")
 
 y <- as.numeric(ponds$V1)
 X <- data.matrix(ponds[, -"V1", with = FALSE])
 X <- X[, 1:18]
-X <- X[y %in% seq(0, 18), ]
-y <- y[y %in% seq(0, 18)]
+X <- X[y %in% seq(0, 17), ]
+y <- y[y %in% seq(0, 17)]
 
 Xreorder <- t(apply(X, 1, reorder_Xsuits_row))
 yreorder <- unlist(sapply(seq_along(y),
@@ -110,16 +110,16 @@ test_x <- Xreorder[(train_n + 1):length(yreorder), ]
 
 # Fit the net -----------------------------------------------------------------
 mx.set.seed(0)
-mx_model <- mx.mlp(device = mx.gpu(1),
+mx_model <- mx.mlp(
                    train_x,
                    train_y,
-                   num.round = 200,
-                   hidden_node = c(27),
+                   num.round = 500,
+                   hidden_node = c(18),
                    activation = "tanh",
                    out_activation = "softmax",
                    out_node = 18,
-                   array.batch.size = 100,
-                   learning.rate = 0.4,
+                   array.batch.size = 120,
+                   learning.rate = 0.1,
                    dropout = 0.1,
                    momentum = 0.1,
                    array.layout = "rowmajor",
@@ -143,19 +143,16 @@ accuracy(test_y, common_unless_furiten(test_x, train_y))
 
 mv_binomial_deviance(test_y, prediction_layer_test)
 multivariate_auc(test_y, prediction_layer_test)
-# 0.6262689 tanh, 200, c(6), 0.4/0.1, 100
-# 0.6348107 ^ with reordering
+# 0.607 18 layer
+
 
 # Methods to score a pond -----------------------------------------------------
 tileset <- c("s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9",
-             "p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9",
-             "m1", "m9",
-             "wE", "wS", "wW", "wN",
-             "dW", "dG", "dR")
+             "p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9")
 
 tiles_to_vec <- function(pond_char) {
   pond_vec <- sapply(pond_char, function(x) which(x == tileset))
-  pond_binary <- rep(0, 26)
+  pond_binary <- rep(0, 18)
 
   n <- 1
   for (tile in pond_vec) {
@@ -169,9 +166,10 @@ tiles_to_vec <- function(pond_char) {
   pond_binary
 }
 
-test_pond <- c("wS", "dR", "s6", "p8", "p9", "m1", "p4", "p4")
-test_pond <- c("s6", "m9", "p9", "m1", "m1", "p4")
+test_pond <- c("s4", "p8")
+test_pond <- c("p8", "s8", "s5", "s6", "s6")
 
+test_pond <- c("p4", "p5", "p1", "p7")
 pond_vec <- tiles_to_vec(test_pond)
 pond_vec_reorder <- reorder_Xsuits_row(pond_vec)
 
@@ -179,4 +177,3 @@ pred_dt <- predict(mx_model, t(pond_vec_reorder)) %>%
   {data.table(tile = names(pond_vec_reorder), prob = round(., 3))}
 
 pred_dt[order(prob.V1)]
-
