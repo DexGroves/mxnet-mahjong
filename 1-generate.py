@@ -60,9 +60,10 @@ tileset = unique_tiles + unique_tiles + unique_tiles + unique_tiles
 player = MahjongPlayer()
 
 # Spam n_trials ponds and write to csv
-f = open('data/ponds.csv', 'w')
+f = open('data/ponds.csv', 'a')
 for i in xrange(n_trials):
-    print i
+    if i % 10 == 0:
+        print i
 
     pond, winning_tile = generate_pond(player, max_len, tileset)
 
