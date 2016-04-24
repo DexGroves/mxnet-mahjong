@@ -1,11 +1,15 @@
 #!/usr/bin/env python2.7
 
 import random
+import sys
 from code.tile import Tile
 from code.hand import Hand
 from code.mahjong_player import MahjongPlayer
 from code.mahjong_table import MahjongTable
 
+
+if len(sys.argv) != 2:
+    raise ValueError("Please supply an output csv location!")
 
 def format_output(pond, max_len, tile_labels):
     """Reformat ponds for stronger affinity to modelling."""
@@ -56,7 +60,7 @@ table = MahjongTable(player, tile_labels)
 
 
 # Spam n_trials ponds and write to csv
-f = open('data/ponds.csv', 'a')
+f = open(sys.argv[1], 'a')
 for i in xrange(n_trials):
     if i % 10 == 0:
         print i
@@ -68,4 +72,3 @@ for i in xrange(n_trials):
         f.write(out_str + '\n')
 
 f.close()
-
