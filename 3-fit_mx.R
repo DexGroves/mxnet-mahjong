@@ -67,7 +67,7 @@ reorder_ysuits_row <- function(X, y) {
 # Program body ---------------------------------------------------------------
 train_n <- 17000
 
-ponds <- fread("data/ponds.csv")
+ponds <- fread("data/all_ponds.csv")
 
 y <- as.numeric(ponds$V1)
 X <- data.matrix(ponds[, -"V1", with = FALSE])

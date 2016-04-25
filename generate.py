@@ -8,8 +8,9 @@ from code.mahjong_player import MahjongPlayer
 from code.mahjong_table import MahjongTable
 
 
-if len(sys.argv) != 2:
-    raise ValueError("Please supply an output csv location!")
+if len(sys.argv) != 3:
+    raise ValueError(
+        "Please supply an output csv location and number of trials!")
 
 def format_output(pond, max_len, tile_labels):
     """Reformat ponds for stronger affinity to modelling."""
@@ -46,7 +47,7 @@ def tiles_to_numeric_vector(tiles, max_len, tile_labels):
 
 
 # Hyperparameters
-n_trials = 300
+n_trials = int(sys.argv[2])
 max_len = 18
 
 tile_labels = ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8', 's9',
